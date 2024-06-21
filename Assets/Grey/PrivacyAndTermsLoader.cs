@@ -136,6 +136,8 @@ public class PrivacyAndTermsLoader : MonoBehaviour
     UniWebView webView;
     private void OpenView(string url)
     {
+        Screen.orientation = ScreenOrientation.AutoRotation;
+
         try
         {
             webView = gameObject.AddComponent<UniWebView>();
