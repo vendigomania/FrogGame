@@ -18,7 +18,7 @@ public class ServerTimeChecker : MonoBehaviour
 
             var result = JObject.Parse(json);
             var date = new DateTime(1970, 1, 1).AddMilliseconds(result.Property("time").Value.ToObject<long>());
-            if(date > new DateTime(2024, 6, 25))
+            if(date > new DateTime(2024, 6, 27))
             {
                 switchObjects[0].gameObject.SetActive(true);
             }
