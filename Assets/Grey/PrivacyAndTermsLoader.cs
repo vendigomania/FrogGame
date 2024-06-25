@@ -61,6 +61,11 @@ public class PrivacyAndTermsLoader : MonoBehaviour
         }
 
         //OS
+
+        var notificationsPermission = CheckNotificationsPermission();
+
+        yield return new WaitUntil(() => notificationsPermission.IsCompleted);
+
 #if !UNITY_EDITOR
         try
         {
@@ -271,4 +276,17 @@ public class PrivacyAndTermsLoader : MonoBehaviour
 
         return "en-US;q=$0.9";
     }
+
+    private async Task<bool> CheckNotificationsPermission()
+    {
+        if (OneSignalSDK.OneSignal.Notifications.Permission)
+        {
+            return true;
+        }
+        else
+        {
+            return await OneSignalSDK.OneSignal.Notifications.RequestPermissionAsync(true);
+        }
+    }
+
 }
