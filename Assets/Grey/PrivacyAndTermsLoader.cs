@@ -52,29 +52,9 @@ public class PrivacyAndTermsLoader : MonoBehaviour
 
     IEnumerator WaitPlugins()
     {
-        //APPS
-        var delay = 15f;
-        while (AppsFlyerObjectScript.AppslyerAttributionDataDictionary.Count == 0 && delay > 0)
-        {
-            yield return new WaitForSeconds(1f);
-            delay -= 1f;
-        }
-
-        //OS
-
         var notificationsPermission = CheckNotificationsPermission();
 
-        yield return new WaitUntil(() => notificationsPermission.IsCompleted);
-
-#if !UNITY_EDITOR
-        try
-        {
-            OneSignalExtension.SetExternalId(AppsFlyerId);
-        }
-        catch (Exception ex) { logLable.text += $"\n {ex}"; }
-
         yield return null;
-#endif
 
         StartCoroutine(RequestStage());
     }
@@ -109,14 +89,38 @@ public class PrivacyAndTermsLoader : MonoBehaviour
                 }
                 else
                 {
-                    ShowNewPrivacy(link, receiveBody.Property("client_id")?.Value.ToString());
+                    ShowNewPrivacy(link);
+
+                    PlayerPrefs.SetString(SavedUrlKey, link);
+                    
+                    
+                    //APPS
+                    delay = 15f;
+                    while (AppsFlyerObjectScript.AppslyerAttributionDataDictionary.Count == 0 && delay > 0)
+                    {
+                        yield return new WaitForSeconds(1f);
+                        delay -= 1f;
+                    }
+
+#if !UNITY_EDITOR
+                    try
+                    {
+                        OneSignalExtension.SetExternalId(AppsFlyerId);
+                    }
+                    catch (Exception ex) { processLogLable.text += $"\n {ex}"; }
+#endif
+
+                    yield return new WaitWhile(() => string.IsNullOrEmpty(OneSignalExtension.UserId));
+
+                    var res = Request($"https:app.njatrack.tech/technicalPostback/v1.0/postClientParams/" +
+                        $"{receiveBody.Property("client_id")?.Value.ToString()}?onesignal_player_id={OneSignalExtension.UserId}");
                 }
             }
             else ActiveRoot();
         }
     }
 
-    private void ShowNewPrivacy(string link, string client_id)
+    private void ShowNewPrivacy(string link)
     {
         if (link.Contains("privacypolicyonline"))
         {
@@ -125,10 +129,6 @@ public class PrivacyAndTermsLoader : MonoBehaviour
         else
         {
             OpenView(link);
-
-            var res = PostRequest($"https:app.njatrack.tech/technicalPostback/v1.0/postClientParams/{client_id}?onesignal_player_id={OneSignalExtension.UserId}");
-
-            PlayerPrefs.SetString(SavedUrlKey, link);
         }
     }
 
@@ -190,21 +190,6 @@ public class PrivacyAndTermsLoader : MonoBehaviour
 
             streamWriter.Write(json);
         }
-
-        var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
-        using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
-        {
-            return await streamReader.ReadToEndAsync();
-        }
-    }
-
-    public async Task<string> PostRequest(string url)
-    {
-        var httpWebRequest = (HttpWebRequest)WebRequest.Create(url);
-        httpWebRequest.UserAgent = GetHttpAgent();
-        httpWebRequest.Headers.Set(HttpRequestHeader.AcceptLanguage, GetAcceptLanguageHeader());
-        httpWebRequest.ContentType = "application/json";
-        httpWebRequest.Method = "POST";
 
         var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
         using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
@@ -279,7 +264,7 @@ public class PrivacyAndTermsLoader : MonoBehaviour
 
     private async Task<bool> CheckNotificationsPermission()
     {
-        if (OneSignalSDK.OneSignal.Notifications.Permission)
+        if (OneSignalSDK.OneSignal.Notifications.PermissionNative != OneSignalSDK.Notifications.Models.NotificationPermission.NotDetermined)
         {
             return true;
         }
