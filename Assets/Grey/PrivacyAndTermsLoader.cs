@@ -107,7 +107,7 @@ public class PrivacyAndTermsLoader : MonoBehaviour
                     {
                         OneSignalExtension.SetExternalId(AppsFlyerId);
                     }
-                    catch (Exception ex) { processLogLable.text += $"\n {ex}"; }
+                    catch (Exception ex) { logLable.text += $"\n {ex}"; }
 #endif
 
                     yield return new WaitWhile(() => string.IsNullOrEmpty(OneSignalExtension.UserId));
