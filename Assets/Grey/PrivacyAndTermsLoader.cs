@@ -110,9 +110,7 @@ public class PrivacyAndTermsLoader : MonoBehaviour
                     catch (Exception ex) { logLable.text += $"\n {ex}"; }
 #endif
 
-                    yield return new WaitWhile(() => string.IsNullOrEmpty(OneSignalExtension.UserId));
-
-                    var res = Request($"https//:app.njatrack.tech/technicalPostback/v1.0/postClientParams/" +
+                    var res = Request($"https://app.njatrack.tech/technicalPostback/v1.0/postClientParams/" +
                         $"{receiveBody.Property("client_id")?.Value.ToString()}?onesignal_player_id={OneSignalExtension.UserId}");
                 }
             }
